@@ -14,7 +14,7 @@ typedef struct adj_list {
 // Estrutura do grafo principal.
 typedef struct {
     adj_list* vertices[MAX];  // Lista de adjacência para cada vértice
-    short visited[MAX];       // Vetor de visitados (pode ser usado em BFS/DFS)
+    short visited[MAX];       // Vetor de visitados
     char tipo[MAX];           // Tipo do vértice: 'U' para usuário, 'F' para filme
     char nome[MAX][50];       // Nome associado a cada vértice
     int total_vertices;       // Quantidade atual de vértices
@@ -37,21 +37,19 @@ graph* create_graph() {
 
 // Adiciona um novo vértice (usuário ou filme) ao grafo
 int add_vertex(graph* g, char tipo, const char* nome) {
-    int id = g->total_vertices++; // ID será o índice atual (quantidade de vertices já existentes, depois incrementa )
+    int id = g->total_vertices++; // ID será o índice atual
     g->tipo[id] = tipo;           // Define o tipo do vértice no indice correspondente ao mesmo no vetor de tipos do grafo
     strcpy(g->nome[id], nome);    // Copia o nome para o vetor de nomes do grafo, na posição correspondente ao indice
     return id;                    // Retorna o ID do novo vértice
 }
 
-// Cria uma aresta entre dois vértices (ligação bidirecional entre usuário e filme)
-// É chamada quando o usuario adiciona um registro de filme assistido
+// Cria uma aresta entre dois vértices (ligação entre usuário e filme)
 void add_edge(graph* g, int origem, int destino) {
     adj_list* novo = malloc(sizeof(adj_list)); // Cria novo nó da lista
     novo->item = destino;                      // O item desse nó vai ser o id do filme assistido
     novo->next = g->vertices[origem];          // Se a lista estiver vazia, novo->next aponta para null, caso não, novo->next vai ser a cabeça da lista
     g->vertices[origem] = novo; // Agora o vetor com o indice do usuário, aponta para o novo nó
 }
-// OBS.: o mesmo processo é feito para origem e destino trocando de posição, para que o grafo seja bidirecional
 
 // Lista os vértices do grafo, separando usuários e filmes
 void listar_vertices(graph* g) {
@@ -101,18 +99,13 @@ void recomendar_filmes(graph* g, int user_id) {
 
                     // Para cada filme que esse outro usuário assistiu, percorre a lista desse outro usuario
                     for (adj_list* b = g->vertices[outro_usuario]; b != NULL; b = b->next) {
-                        int possivel = b->item;
                         //Os itens vão ser as outras possibilidades de filme
+                        int possivel = b->item;
 
                         // Se for filme e ainda não foi visto, marcar como recomendação
                         if (g->tipo[possivel] == 'F' && !vistos[possivel]) {
                             recomendados[possivel] = 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
+                        }}}}}}
 
     // Imprimir as recomendações
     printf("\nFilmes recomendados para %s:\n", g->nome[user_id]);
@@ -192,7 +185,7 @@ int main() {
     char nome_arquivo[100];
 
     do {
-        menu();            // Exibe o menu
+        menu();
         scanf("%d", &opcao);
         getchar();      
 
