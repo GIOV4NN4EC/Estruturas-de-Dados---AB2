@@ -171,12 +171,14 @@ void compactarHuffman(const char *nomeEntrada, const char *nomeSaida) {
     char caminhoAtual[TAMANHO_TABELA];
     gerarCodigos(raiz, caminhoAtual, 0, tabelaCodigos);
 
+    //Abre o arquivo de saída e guarda dois bytes pro cabeçalho
     FILE *saida = fopen(nomeSaida, "wb");
     if (!saida) return;
 
     fputc(0, saida);
     fputc(0, saida);
 
+    //A arvore é serializada em pré-ordem e escrita no inicio do arquivo
     int tamanhoArvore = escreverArvore(raiz, saida);
 
     FILE *entrada = fopen(nomeEntrada, "rb");
@@ -184,23 +186,34 @@ void compactarHuffman(const char *nomeEntrada, const char *nomeSaida) {
         fclose(saida);
         return;
     }
-//---------ATENÇÃO-------------
+
+    //inicializa o controlador de bits
     ControladorBits controlador;
     inicializarControlador(&controlador, saida);
 
+    //Lê o arquivo de entrada e escreve os bits correspondentes
     int caractere;
     while ((caractere = fgetc(entrada)) != EOF) {
+        //Para cada caractere lido, acessa seu código binário na tabela de códigos
         char *codigo = tabelaCodigos[caractere];
+        //insere cada bit no buffer até completar 8bits 
         for (int i = 0; codigo[i] != '\0'; i++)
+            //converte cada dígito em seu valor numérico
             escreverBit(&controlador, codigo[i] - '0');
     }
-
+    //se o ultimo byte for incompleto, preenche com 0s e grava no arquivo
     finalizarEscrita(&controlador);
+    //calcula quantos bits são de lixo no ultimo byte
     int bitsLixo = (8 - (controlador.totalBits % 8)) % 8;
+    //cria o cabeçalho com o tamanho da arvore e bits lixo
+    //garante que pro tamanho da arvore, sejam pegos os 13 menos significativos
     unsigned short cabecalho = (bitsLixo << 13) | (tamanhoArvore & 0x1FFF);
 
+    //vai pro inicio do arquivo de saída
     fseek(saida, 0, SEEK_SET);
+    //escreve o primeiro byte do cabeçalho com a parte mais significativa
     fputc((cabecalho >> 8) & 0xFF, saida);
+    //escreve o segundo byte do cabeçalho com a parte menos significativa
     fputc(cabecalho & 0xFF, saida);
 
     fclose(entrada);
@@ -209,10 +222,14 @@ void compactarHuffman(const char *nomeEntrada, const char *nomeSaida) {
 
 //LÊ O CABEÇALHO DE UM ARQUIVO COMPACTADO, EXTRAINDO INFORMAÇÕES DO CONTROLE
 void lerCabecalho(FILE *arquivo, int *bitsLixo, int *tamanhoArvore) {
+    //volta pro inicio do arquivo
     fseek(arquivo, 0, SEEK_SET);
+    //lê os dois primeiros bytes
     int byte1 = fgetc(arquivo);
     int byte2 = fgetc(arquivo);
+    //pega os 3 primeiros bits do byte1 que são o lixo
     *bitsLixo = byte1 >> 5;
+    //pega os 5 bits restantes para formar os 13 mias significativos, combinando com byte2
     *tamanhoArvore = (byte1 & 0x1F) << 8 | byte2;
 }
 
@@ -239,27 +256,36 @@ void decodificarBits(FILE *entrada, FILE *saida, No *raiz, int bitsLixo) {
     uint8_t byteAtual, proximoByte;
     int finalizado = 0;
 
-    //------ATENÇÃO--------------
+    //tenta ler 1 byte do arquivo de entrada  pra armazenar na variavel byteatual
+    //se o arquivo acabar, a função retorna
     size_t leitura = fread(&byteAtual, 1, 1, entrada);
     if (leitura != 1) return;
 
     while (!finalizado) {
+        //tenta ler o proximo byte do arquivo
         size_t leituraProx = fread(&proximoByte, 1, 1, entrada);
+        //caso existam bits restantes, é o byte final do arquivo
+        //caso seja, desconsidera os bits lixo
         int bitsRestantes = (leituraProx == 1) ? 8 : 8 - bitsLixo;
+        //finaliza o loop se não tive próx a ser lido
         finalizado = (leituraProx != 1);
 
+        //lê cada bit de byteAtual, do mais significativo pro menos significativo
         for (int i = 7; i >= 8 - bitsRestantes; i--) {
             int bit = (byteAtual >> i) & 1;
+            //usa esse bit pra navegar pela arvore (0->esquerda, 1->direita)
             atual = (bit == 0) ? atual->esquerda : atual->direita;
 
+            //quando chega numa folha, escreve o simbolo no arquivo de saída
             if (!atual->esquerda && !atual->direita) {
                 fputc(atual->simbolo, saida);
                 atual = raiz;
             }
         }
+        //atualiza o byte atual e continua o loop
         byteAtual = proximoByte;
     }
-}//------ ATÉ AQUI ----------
+}
 
 //REALIZAM A DESCOMPACTAÇÃO DE UM ARQUIVO
 void descompactarHuffman(const char *nomeEntrada, const char *nomeSaida) {
