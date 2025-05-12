@@ -177,8 +177,9 @@ FormulaCNF *ler_arquivo_cnf(const char *nome_arquivo)
                 }
                 literais_clausula = realloc(literais_clausula, sizeof(int) * capacidade_literais);
             }
-
+            //adiciona o lteral lido ao vetor de literais da clausula
             literais_clausula[tamanho_literais++] = literal;
+            //começa a tokenizar novamente a partir do nulo (finaliza a clausula)
             token = strtok(NULL, " \n");
         }
 
