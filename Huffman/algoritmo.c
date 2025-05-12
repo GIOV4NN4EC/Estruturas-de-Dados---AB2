@@ -184,7 +184,7 @@ void compactarHuffman(const char *nomeEntrada, const char *nomeSaida) {
         fclose(saida);
         return;
     }
-
+//---------ATENÇÃO-------------
     ControladorBits controlador;
     inicializarControlador(&controlador, saida);
 
@@ -239,6 +239,7 @@ void decodificarBits(FILE *entrada, FILE *saida, No *raiz, int bitsLixo) {
     uint8_t byteAtual, proximoByte;
     int finalizado = 0;
 
+    //------ATENÇÃO--------------
     size_t leitura = fread(&byteAtual, 1, 1, entrada);
     if (leitura != 1) return;
 
@@ -258,7 +259,7 @@ void decodificarBits(FILE *entrada, FILE *saida, No *raiz, int bitsLixo) {
         }
         byteAtual = proximoByte;
     }
-}
+}//------ ATÉ AQUI ----------
 
 //REALIZAM A DESCOMPACTAÇÃO DE UM ARQUIVO
 void descompactarHuffman(const char *nomeEntrada, const char *nomeSaida) {
